@@ -53,13 +53,44 @@ We provide a unified script attack.sh that automatically selects the correct att
   - [ECAPA-TDNN](https://github.com/TaoRuijie/ECAPA-TDNN.git)
   - [ResNet34](https://github.com/eurecom-asp/sasv-joint-optimisation.git)
 
----
-
 ### 2. Run attack
 
-<pre><code>```bash bash attack.sh # Default parameters used in attack.sh: batch_size=1 input_path='./LA/ASVspoof2019_LA_eval/flac/' output_path='./' adv_method1='CM_FGSM_0001' # or 'ASV_BIM_0003' # The script automatically dispatches to the correct attack module: if [[ "$adv_method1" == CM* ]]; then script="gen_ad_cm.py" elif [[ "$adv_method1" == ASV* ]]; then script="gen_ad_asv.py" else echo "❌ Error: adv_method1 must start with 'CM' or 'ASV'" exit 1 fi # The actual command executed: CUDA_VISIBLE_DEVICES=0 python ${script} \ --batch_size ${batch_size} \ --input_path ${input_path} \ --output_path ${output_path} \ --adv_method1 ${adv_method1} ``` </code></pre>
+```bash
+bash attack.sh
+```
 
----
+Default parameters used in `attack.sh`:
+
+```bash
+batch_size=1
+input_path='./LA/ASVspoof2019_LA_eval/flac/'
+output_path='./'
+adv_method1='CM_FGSM_0001'  # or 'ASV_BIM_0003'
+```
+
+The script automatically dispatches to the correct attack module:
+
+```bash
+if [[ "$adv_method1" == CM* ]]; then
+    script="gen_ad_cm.py"
+elif [[ "$adv_method1" == ASV* ]]; then
+    script="gen_ad_asv.py"
+else
+    echo "❌ Error: adv_method1 must start with 'CM' or 'ASV'"
+    exit 1
+fi
+```
+
+The actual command executed:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python ${script} \
+    --batch_size ${batch_size} \
+    --input_path ${input_path} \
+    --output_path ${output_path} \
+    --adv_method1 ${adv_method1}
+```
+
 
 ## 🖼️ Example Architecture
 

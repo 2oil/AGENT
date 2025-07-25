@@ -34,7 +34,7 @@ class MyConformer(nn.Module):
             x, _ = layer(x)
         embedding = x[:, 0, :]  # [bs, emb_size]
         out = self.fc5(embedding)  # [bs, 2]
-        return out, None  # attn_score 필요 없다면 None 처리
+        return out, None 
 
 
 class SSLModel(nn.Module): #W2V

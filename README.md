@@ -1,153 +1,114 @@
-# Defense against Adversarial Attacks on Audio DeepFake Detection
+# The Achilles' Heel of SASV: A Module-Level Adversarial Attack Framework
 
-The following repository contains code for our paper called "Defense against Adversarial Attacks on Audio DeepFake Detection".
+This repository provides the official implementation of the adversarial attack framework proposed in the paper:
 
-The paper is available [here](https://www.isca-speech.org/archive/interspeech_2023/kawa23_interspeech.html).
+> **"The Achilles’ Heel of SASV: A Module-Level Comparative Analysis of Adversarial Vulnerabilities"**  
+> Yowon Lee, Thien-Phuc Doan, Sanghyun Hong, and Souhwan Jung  
+> [PeerJ Computer Science, Under Review]  
+> 📄 *[PDF available upon request]*
 
-We base our codebase on [Attack Agnostic Dataset repo](https://github.com/piotrkawa/attack-agnostic-dataset).
+---
 
-## Demo samples
-You can find demo samples [here](https://piotrkawa.github.io/papers/adversarial_attacks.html)
+## 🔥 Overview
 
-## Before you start
+Spoofing-Aware Speaker Verification (SASV) systems integrate Automatic Speaker Verification (ASV) and Spoofing Countermeasure (CM) modules. While robust against spoofing attacks, the vulnerability of these systems to **adversarial attacks** has been underexplored.
 
-### Datasets
+This repository contains code for generating **module-targeted adversarial examples** that attack either the ASV or CM component.
 
-Download appropriate datasets:
+---
 
-* [ASVspoof2021 DF subset](https://zenodo.org/record/4835108) (**Please note:** we use [this keys&metadata file](https://www.asvspoof.org/resources/DF-keys-stage-1.tar.gz)),
-* [FakeAVCeleb](https://github.com/DASH-Lab/FakeAVCeleb#access-request-form),
-* [WaveFake](https://zenodo.org/record/5642694) (along with JSUT and LJSpeech).
+## 🧪 Supported Attack Scenarios
 
+| Module Targeted | Objective |
+|------------------|-----------|
+| CM module | Spoofed samples misclassified as bonafide |
+| ASV module | Non-target samples accepted as target |
 
-### Dependencies
-Install required dependencies using: 
-```bash
-pip install -r requirements.txt
-```
+Each attack is implemented using standard methods:
+- FGSM (Fast Gradient Sign Method)
+- BIM (Basic Iterative Method)
+- PGD (Projected Gradient Descent)
 
-### Configs
+---
+## ▶️ Usage
 
-Both training and evaluation scripts are configured with the use of CLI and `.yaml` configuration files. File defines processing applied to raw audio files, as well as used architecture. An example config of LCNN architecture with LFCC frontend looks as follows:
-```yaml
-data:
-  seed: 42
+We provide a unified script attack.sh that automatically selects the correct attack script (gen_ad_cm.py or gen_ad_asv.py) based on the prefix of the attack method.
 
-checkpoint: 
-  # This part is used only in evaluation 
-  path: "trained_models/aad__lcnn/ckpt.pth",
+### 1. Prepare models and data
 
-model:
-  name: "lcnn"  # {"lcnn", "specrnet", "rawnet3"}
-  parameters:
-    input_channels: 1
-  optimizer:
-    lr: 0.0001
-```
+- **Dataset**: Download and extract the [ASVspoof2019-LA evaluation set](https://datashare.ed.ac.uk/handle/10283/3336](https://www.asvspoof.org/asvspoof2021/LA-keys-full.tar.gz).  
+  Place the evaluation audio under:
 
-Other example configs are available under `configs/training/`
-
-##  Train models 
+  
+./LA/ASVspoof2019_LA_eval/flac/
 
 
-To train models use `train_models.py`. 
+- **Models**: Download pretrained ASV and CM models.
+  [CM]
+  - [AASIST](https://github.com/clovaai/aasist.git)
+  - [AASIST-SSL](https://dl.fbaipublicfiles.com/fairseq/wav2vec/xlsr2_300m.pt)
+  - [RawNet2](https://github.com/asvspoof-challenge/2021/blob/main/LA/Baseline-RawNet2/README.md)
+    
+  [ASV]
+  - [ECAPA-TDNN](https://github.com/TaoRuijie/ECAPA-TDNN.git)
+  - [ResNet34](https://github.com/eurecom-asp/sasv-joint-optimisation.git)
+
+---
+
+### 2. Run attack
+
+bash
+bash attack.sh
 
 
-```
-usage: train_models.py [-h] [--asv_path ASV_PATH] [--wavefake_path WAVEFAKE_PATH] [--celeb_path CELEB_PATH] [--config CONFIG] [--amount AMOUNT] [--batch_size BATCH_SIZE] [--epochs EPOCHS] [--ckpt CKPT] [--cpu]
+Default parameters used in attack.sh:
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --asv_path ASV_PATH   Path to ASVspoof2021 dataset directory
-  --wavefake_path WAVEFAKE_PATH
-                        Path to WaveFake dataset directory
-  --celeb_path CELEB_PATH
-                        Path to FakeAVCeleb dataset directory
-  --config CONFIG       Model config file path (default: config.yaml)
-  --train_amount TRAIN_AMOUNT, -a TRAIN_AMOUNT
-                        Amount of files to load for training.
-  --test_amount TEST_AMOUNT, -ta TEST_AMOUNT
-                        Amount of files to load for testing.
-  --batch_size BATCH_SIZE, -b BATCH_SIZE
-                        Batch size (default: 128).
-  --epochs EPOCHS, -e EPOCHS
-                        Epochs (default: 5).
-  --ckpt CKPT           Checkpoint directory (default: trained_models).
-  --cpu, -c             Force using cpu?
-```
-
-## Evaluate models
+bash
+batch_size=1
+input_path='./LA/ASVspoof2019_LA_eval/flac/'
+output_path='./'
+adv_method1='CM_FGSM_0001'  # or 'ASV_BIM_0003'
 
 
-Once your models are trained you can evalaute them using `evaluate_models.py`.
+The script automatically dispatches to the correct attack module:
 
-**Before you start:** add checkpoint paths to the config used in training process.
-
-
-
-```
-usage: evaluate_models.py [-h] [--asv_path ASV_PATH] [--wavefake_path WAVEFAKE_PATH] [--celeb_path CELEB_PATH] [--config CONFIG] [--amount AMOUNT] [--cpu] 
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --asv_path ASV_PATH
-  --wavefake_path WAVEFAKE_PATH
-  --celeb_path CELEB_PATH
-  --config CONFIG       Model config file path (default: config.yaml)
-  --amount AMOUNT, -a AMOUNT
-                        Amount of files to load from each directory (default: None - use all).
-  --cpu, -c             Force using cpu
-```
-e.g. to evaluate LCNN network add appropriate checkpoint paths to config and then use:
-```
-python evaluate_models.py --config configs/training/lcnn.yaml --asv_path ../datasets/ASVspoof2021/DF --wavefake_path ../datasets/WaveFake --celeb_path ../datasets/FakeAVCeleb/FakeAVCeleb_v1.2
-```
-
-## Adversarial Evaluation
+bash
+if [[ "$adv_method1" == CM* ]]; then
+    script="gen_ad_cm.py"
+elif [[ "$adv_method1" == ASV* ]]; then
+    script="gen_ad_asv.py"
+else
+    echo "❌ Error: adv_method1 must start with 'CM' or 'ASV'"
+    exit 1
+fi
 
 
+The actual command executed:
 
-Attack LCNN network using white-box setting with FGSM attack:
-```bash
-python evaluate_models_on_adversarial_attacks.py --attack FGSM --config configs/frontend_lcnn.yaml --attack_model_config configs/frontend_lcnn.yaml --raw_from_dataset
-```
-
-Attack LCNN network using transferability setting with FGSM attack based on RawNet3:
-```bash
-python evaluate_models_on_adversarial_attacks.py --attack FGSM --config configs/frontend_lcnn.yaml --attack_model_config configs/rawnet3.yaml --raw_from_dataset
-```
-
-## Adversarial Training
+bash
+CUDA_VISIBLE_DEVICES=0 python ${script} \
+    --batch_size ${batch_size} \
+    --input_path ${input_path} \
+    --output_path ${output_path} \
+    --adv_method1 ${adv_method1}
 
 
-Finetune LCNN model for 10 epochs using a `` strategy:
-```bash
-python train_models_with_adversarial_attacks.py --config {config} --epochs 10 --adv_training_strategy {args.adv_training_strategy} --attack_model_config {attack_model_config} --finetune
-```
+---
 
-## Acknowledgments
+## 🖼️ Example Architecture
 
-Apart from the dependencies mentioned in Attack Agnostic Dataset repository we also include: 
-* [RawNet3 implementation](https://github.com/Jungjee/RawNet), 
-* [Adversarial-Attacks-PyTorch repository](https://github.com/Harry24k/adversarial-attacks-pytorch) - please note that we slightly modified it. The `adversarial_attacks` source code placed in our repository handles single value outputs and wave inputs, e.g., we create a two element vector based on a single value output as follows:
-```python
-outputs = self.model(images)
-outputs = torch.cat([-outputs, outputs], dim=1)
-```
-Note that only selected adversarial attacks are handled: FGSM, FAB, PGD, PGDL2, OnePixel and CW.
+![SASV Attack Pipeline](figures/fig1.png)
 
-## Citation
+---
 
-If you use this code in your research please use the following citation:
+### 📌 Tips
 
-```
-@inproceedings{kawa23_interspeech,
-  author={Piotr Kawa and Marcin Plata and Piotr Syga},
-  title={{Defense Against Adversarial Attacks on Audio DeepFake Detection}},
-  year=2023,
-  booktitle={Proc. INTERSPEECH 2023},
-  pages={5276--5280},
-  doi={10.21437/Interspeech.2023-409}
-}
-```
+- adv_method1 should begin with 'CM' or 'ASV' to trigger the appropriate attack.
+- You can add more arguments (e.g., --epsilon, --steps) to attack.sh as needed.
 
+---
+
+## 📬 Contact
+
+For questions, contact:  
+**Yowon Lee** – agent251@soongsil.ac.kr

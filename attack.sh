@@ -1,7 +1,7 @@
 batch_size=1
 input_path='./LA/ASVspoof2019_LA_eval/flac/'
 output_path='./'
-adv_method1='ASV_FGSM_0003'
+adv_method1='CM_FGSM_0001'
 
 if [[ "$adv_method1" == CM* ]]; then
     script="gen_ad_cm.py"

@@ -37,7 +37,7 @@ def main():
         # "model_name": "ecapa_tdnn",
         # "model_pretrained": "./pretrain.model",  
 
-        "eval_list": "'/your/path/LA/ASVspoof2019_LA_asv_protocols/ASVspoof2019.LA.asv.eval.gi.trl.txt' ",
+        "eval_list": "/your/path/LA/ASVspoof2019_LA_asv_protocols/ASVspoof2019.LA.asv.eval.gi.trl.txt",
         "enroll_path": "./enr_audio/eval",
 
         "device": "cuda",

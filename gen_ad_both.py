@@ -49,7 +49,7 @@ def main():
         #############################################################
 
         #"model_name": "aasist",
-        #"model_pretrained": "/home/eoil/aasist/models/weights/AASIST.pth",
+        #"model_pretrained": "./pretrained/AASIST.pth",
         #"config_path": "./AASIST_conf.yaml",
 
         "model_name": "aasistssl",
@@ -61,24 +61,13 @@ def main():
         #"model_name": "rawnet2",
         #"model_pretrained": "./pretrained_rawnet2/pre_trained_DF_RawNet2.pth",
 
-        "eval_list": "/home/eoil/AGENT/ICASSP2026/experiments/protocol/resnet34.txt",
+        "eval_list": "/your/path/protocol.txt",
     }
     
-    # ASVspoof
+
     protocol_df = pd.read_csv(config["eval_list"], sep=" ", header=None, names=["utt1", "utt2", "label", "type"])
-    # VoxCeleb
-    # protocol_df = pd.read_csv(
-    #     config["eval_list"],
-    #     sep=" ",
-    #     header=None,
-    #     names=["label", "enroll", "test"]
-    # )
-    # ASVspoof
     filenames = protocol_df["utt2"].apply(lambda x: os.path.join(args.input_path, f"{x}.flac")).tolist()
     labels = protocol_df["type"].tolist()
-    # VoxCeleb
-    # filenames = protocol_df["test"].apply(lambda x: os.path.join(args.input_path, f"{x}")).tolist()
-    # labels = protocol_df["label"].tolist()
 
     ana = AdversarialNoiseAugmentor(config)
     ana.load_batch(filenames, labels)

@@ -60,7 +60,6 @@ class ReLU:
             # ASV loss
             emb_asv = self.asv_model(adv).squeeze(0)
             asv_sim = F.cosine_similarity(target_emb, emb_asv, dim=0)
-            #asv_loss = torch.abs(asv_threshold - asv_sim)
             asv_loss = asv_sim
             grad_asv = torch.autograd.grad(asv_loss, adv, retain_graph=True)[0]
 
@@ -74,11 +73,10 @@ class ReLU:
             g_cm = grad_cm / (torch.norm(grad_cm) + 1e-8)
             g_asv = grad_asv / (torch.norm(grad_asv) + 1e-8)
 
-            # ---- ReLU(cos) weighting: 90° 이상이면 0, 그 이내면 cos(theta)만큼 가중 ----
+            # ReLU(cos) weighting
             dot = (g_asv * g_cm).sum()          
             w = F.relu(dot).detach()           
             g_total = g_asv + w * g_cm
-            # ----------------------------------------------------------------------
 
             # L_inf update
             adv = adv + self.alpha * g_total.sign()

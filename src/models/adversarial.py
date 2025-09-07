@@ -24,16 +24,10 @@ sys.path.append("/home/eoil/AGENT/next_tdnn")
 SUPPORTED_CM = ["aasistssl","aasist","conformer_tcm","rawnet2"]
 SUPPORTED_ASV = ["resnetse34v2","ecapa_tdnn","next_tdnn"]
 SUPPORTED_ADV = [
-    "CM_FGSM_0001", "CM_FGSM_0003", "CM_FGSM_0005", "CM_FGSM_0007", 
-    "CM_BIM_0001", "CM_BIM_0003", "CM_BIM_0005", "CM_BIM_0007", "CM_BIM_001", "CM_BIM_004", "CM_BIM_008", "CM_BIM_012", "CM_BIM_016",
-    "CM_PGD_0001", "CM_PGD_0003", "CM_PGD_0005", "CM_PGD_0007",
-    "ASV_FGSM_0001", "ASV_FGSM_0003", "ASV_FGSM_0005", "ASV_FGSM_0007", 
-    "ASV_BIM_0001", "ASV_BIM_0003", "ASV_BIM_0005", "ASV_BIM_0007", "ASV_BIM_001", "ASV_BIM_004", "ASV_BIM_008", "ASV_BIM_012", "ASV_BIM_016",
-    "ASV_PGD_0001", "ASV_PGD_0003", "ASV_PGD_0005", "ASV_PGD_0007",
-    "BOTH_DD_004", "BOTH_DD_008",
+    "CM_BIM_001", "CM_BIM_004", "CM_BIM_008", "CM_BIM_012", "CM_BIM_016",
+    "ASV_BIM_001", "ASV_BIM_004", "ASV_BIM_008", "ASV_BIM_012", "ASV_BIM_016",
     "BOTH_AGENT_001", "BOTH_AGENT_004", "BOTH_AGENT_008", "BOTH_AGENT_012", "BOTH_AGENT_016",
-    "BOTH_ReLU_004", "BOTH_ReLU_008",
-    "BOTH_ReLU_00"
+    "BOTH_ReLU_004", "BOTH_ReLU_008"
 ]
 
 import logging
@@ -86,12 +80,8 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
         elif self.model_name == "aasistssl":
             self.artmodel = AasistSSL(device=self.device)
             self.artmodel = nn.DataParallel(self.artmodel).to(self.device)
-
-            # checkpoint key 정리
             ckpt = torch.load(self.model_pretrained, map_location=self.device)
             ckpt = {f"module.{k}" if not k.startswith("module.") else k: v for k, v in ckpt.items()}
-
-            # 유연하게 로드
             self.artmodel.load_state_dict(ckpt, strict=False)
             self.artmodel.eval()
 
@@ -144,7 +134,7 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
         
         elif self.model_name == "next_tdnn":
             import importlib.util
-            spec = importlib.util.spec_from_file_location("asv_config", "/home/eoil/AGENT/next_tdnn/NeXt_TDNN_C256_B3_K65_7_cyclical_lr_step.py")
+            spec = importlib.util.spec_from_file_location("asv_config", "./next_tdnn/NeXt_TDNN_C256_B3_K65_7_cyclical_lr_step.py")
             cfg = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(cfg)
 
@@ -218,7 +208,7 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
                 
             elif config["asv_model_name"] == "next_tdnn":
                 import importlib.util
-                spec = importlib.util.spec_from_file_location("asv_config", "/home/eoil/AGENT/next_tdnn/NeXt_TDNN_C256_B3_K65_7_cyclical_lr_step.py")
+                spec = importlib.util.spec_from_file_location("asv_config", "./next_tdnn/NeXt_TDNN_C256_B3_K65_7_cyclical_lr_step.py")
                 cfg = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(cfg)
 
@@ -303,14 +293,12 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
             self.labels.append(label)
             self.batched_filenames.append([filename])
 
- #ASVspoof
     def apply_adv_attack(self, batch_x, batch_y, target_spk, test_utterance):
         batch_x = batch_x.to(self.device)
         batch_y = batch_y.to(self.device)
 
         target_module = AttackEnum[self.adv_method1].target_module
 
-        # ✅ 먼저 result 받아오기
         if target_module == "ASV":
             result = self.adv_class1.forward(target_spk=target_spk, test_utterance=test_utterance)
         elif target_module == "CM":
@@ -320,12 +308,11 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
         else:
             raise ValueError(f"Unknown target module: {target_module}")
 
-        # 실패했을 경우 None 리턴
         if result is None:
             print(f"[ERROR] Failed to generate adversarial example for {test_utterance}")
             return None
 
-        # ✅ result unpack
+        # result unpack
         if target_module == "ASV":
             asv_before_score, asv_after_score, adv_audio = result
             adv_images = torch.tensor(adv_audio).unsqueeze(0).to(self.device)
@@ -341,45 +328,6 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
             adv_images = torch.tensor(adv_audio).unsqueeze(0).to(self.device)
             return cm_before, cm_after, asv_before, asv_after, adv_images
 
-# VoxCeleb
-    # def apply_adv_attack(self, batch_x, batch_y, enroll_file, test_file):
-    #     batch_x = batch_x.to(self.device)
-    #     batch_y = batch_y.to(self.device)
-
-    #     target_module = AttackEnum[self.adv_method1].target_module
-
-    #     # ✅ result 받아오기
-    #     if target_module == "ASV":
-    #         result = self.adv_class1.forward(enroll_file, test_file)
-    #     elif target_module == "CM":
-    #         result = self.adv_class1.forward(batch_x, batch_y)
-    #     elif target_module == "BOTH":
-    #         result = self.adv_class1.forward(enroll_file, test_file)
-    #     else:
-    #         raise ValueError(f"Unknown target module: {target_module}")
-
-    #     if result is None:
-    #         print(f"[ERROR] Failed to generate adversarial example for {test_file}")
-    #         return None
-
-    #     # ✅ result unpack
-    #     if target_module == "ASV":
-    #         asv_before_score, asv_after_score, adv_audio = result
-    #         adv_images = torch.tensor(adv_audio).unsqueeze(0).to(self.device)
-    #         return None, None, asv_before_score, asv_after_score, adv_images
-
-    #     elif target_module == "CM":
-    #         cm_before_score, cm_after_score, adv_audio = result
-    #         adv_images = torch.tensor(adv_audio).unsqueeze(0).to(self.device)
-    #         return cm_before_score, cm_after_score, None, None, adv_images
-
-    #     elif target_module == "BOTH":
-    #         cm_before, cm_after, asv_before, asv_after, adv_audio = result
-    #         adv_images = torch.tensor(adv_audio).unsqueeze(0).to(self.device)
-    #         return cm_before, cm_after, asv_before, asv_after, adv_images
-
-
-    
     def transform(self):
         # get classifier_art
         # [TODO] load model here
@@ -389,8 +337,6 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
         # get classifier_art
         # [TODO] load model here
         raise NotImplementedError
-
-        #ASVspoof
     
     def transform_batch(self, protocol_df):
         print(f"[DEBUG] protocol length = {len(protocol_df)}")
@@ -400,13 +346,11 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
         adv_subdir = os.path.join(self.output_path, f"adv_examples/ab/{self.adv_method1.lower()}")
         os.makedirs(adv_subdir, exist_ok=True)
 
-        # 로그 파일 경로
         log_file_path = os.path.join(
             adv_subdir, 
             f"score_{self.adv_method1.lower()}_{target_module.lower()}.txt"
         )
 
-        # 로그 파일 헤더 초기화
         with open(log_file_path, "w") as log_file:
             if target_module == "ASV":
                 log_file.write("utt1\tutt2\tasv_before\tasv_after\n")
@@ -454,7 +398,7 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
             attacked_sample = adv_images.detach().cpu().numpy().flatten()
             sf.write(output_audio_path, attacked_sample, 16000, format='WAV')
 
-            # 로그 저장
+            # log
             with open(log_file_path, "a") as log_file:
                 if target_module == "ASV":
                     log_file.write(f"{utt1}\t{utt2}\t{float(asv_before_score):.6f}\t{float(after_cosine_sim):.6f}\n")
@@ -473,87 +417,3 @@ class AdversarialNoiseAugmentor(BaseAugmentor):
                     ):
                         log_file.write(f"{utt1}\t{utt2}\t{float(before_score):.6f}\t{float(after_score):.6f}\t"
                                     f"{float(asv_before_score):.6f}\t{float(after_cosine_sim):.6f}\n")
-                        
-
-    # #VoxCeleb
-
-    # def transform_batch(self, protocol_df):
-    #     attack_enum = AttackEnum[self.adv_method1]
-    #     target_module = attack_enum.target_module  # "CM", "ASV", or "BOTH"
-
-    #     adv_subdir = os.path.join(self.output_path, f"adv_examples/{self.adv_method1.lower()}")
-    #     os.makedirs(adv_subdir, exist_ok=True)
-
-    #     # 로그 파일 경로
-    #     log_file_path = os.path.join(
-    #         adv_subdir, 
-    #         f"score_{self.adv_method1.lower()}_{target_module.lower()}.txt"
-    #     )
-
-    #     # 로그 파일 헤더 초기화
-    #     with open(log_file_path, "w") as log_file:
-    #         if target_module == "ASV":
-    #             log_file.write("enroll\ttest\tasv_before\tasv_after\n")
-    #         elif target_module == "CM":
-    #             log_file.write("enroll\ttest\tcm_before\tcm_after\n")
-    #         elif target_module == "BOTH":
-    #             log_file.write("enroll\ttest\tcm_before\tcm_after\tasv_before\tasv_after\n")
-
-    #     MAX_LEN = 32000
-
-    #     for j in tqdm(range(len(protocol_df)), desc="Generating adversarial noise"):
-    #         row = protocol_df.iloc[j]
-    #         label, enroll, test = row["label"], row["enroll"], row["test"]
-
-    #         enroll_path = os.path.join(self.input_path, enroll)
-    #         test_path   = os.path.join(self.input_path, test)
-
-    #         if not os.path.exists(test_path) or not os.path.exists(enroll_path):
-    #             print(f"[WARNING] Missing file: {enroll_path} or {test_path}")
-    #             continue
-
-    #         # === 파일명 구성 (생성 전 체크) ===
-    #         test_spk = os.path.splitext(test)[0] 
-    #         enroll_name = os.path.splitext(enroll)[0]           
-    #         out_path = os.path.join(
-    #             adv_subdir, 
-    #             f"{test_spk}_{enroll_name}.wav"
-    #         )
-
-    #         if os.path.exists(out_path):
-    #             print(f"[SKIP] Already exists: {out_path}")
-    #             continue
-
-    #         # === 오디오 로드 ===
-    #         audio_data, _ = librosa.load(test_path, sr=16000)
-    #         if len(audio_data) > MAX_LEN:
-    #             audio_data = audio_data[:MAX_LEN]
-    #         batch = torch.tensor(audio_data).unsqueeze(0).to(self.device)
-
-    #         label_tensor = torch.tensor([label], dtype=torch.long).to(self.device)
-
-    #         # === 공격 적용 ===
-    #         before_cm, after_cm, before_asv, after_asv, adv_audio = \
-    #             self.apply_adv_attack(batch, label_tensor, enroll_path, test_path)
-
-    #         if adv_audio is None:
-    #             continue  # 실패시 스킵
-
-    #         os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    #         sf.write(out_path, adv_audio.squeeze(0).cpu().numpy(), 16000)
-
-
-            # # 로그 저장
-            # with open(log_file_path, "a") as log_file:
-            #     if target_module == "ASV":
-            #         log_file.write(f"{enroll}\t{test}\t{float(before_asv):.6f}\t{float(after_asv):.6f}\n")
-
-            #     elif target_module == "CM":
-            #         log_file.write(f"{enroll}\t{test}\t{float(before_cm):.6f}\t{float(after_cm):.6f}\n")
-
-            #     elif target_module == "BOTH":
-            #         log_file.write(
-            #             f"{enroll}\t{test}\t"
-            #             f"{float(before_cm):.6f}\t{float(after_cm):.6f}\t"
-            #             f"{float(before_asv):.6f}\t{float(after_asv):.6f}\n"
-            #         )

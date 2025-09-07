@@ -64,7 +64,7 @@ def main():
             "input_path": args.input_path,
         }
    
-    file_path = '/home/eoil/AGENT/ICASSP2026/experiments/protocol/resnetOC.txt' 
+    file_path = "/your/path/protocol.txt" 
     protocol_df = pd.read_csv(file_path, sep=" ", header=None, names=["utt1", "utt2", "label", "type"])
 
     filenames = protocol_df["utt2"].apply(lambda x: os.path.join(args.input_path, f"{x}.flac")).tolist()

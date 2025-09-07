@@ -40,7 +40,7 @@ def main():
         "model_name": "next_tdnn",
         "model_pretrained": "./pretrained/model.pt",
 
-        "eval_list": "/home/eoil/AGENT/ICASSP2026/experiments/protocol/resnet34.txt",
+        "eval_list": "/your/path/protocol.txt",
         "enroll_path": "./enr_audio/eval",
 
         "device": "cuda",

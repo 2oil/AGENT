@@ -22,10 +22,12 @@ class CM_BIM(Attack):
             before_attack = self.model(images)
             before_score = before_attack[:, 1].cpu().numpy().ravel()
 
+        cm_threshold = 1.85
+
         for _ in range(self.steps):
             images.requires_grad = True
-            outputs = self.model(images)
-            loss = nn.CrossEntropyLoss()(outputs, labels)
+            outputs = self.model(images)[0, 1]
+            loss = - torch.abs(cm_threshold - outputs)
             grad = torch.autograd.grad(loss, images, retain_graph=False, create_graph=False)[0]
 
             images = images + self.alpha * grad.sign()

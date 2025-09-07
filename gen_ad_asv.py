@@ -31,13 +31,16 @@ def main():
         "out_format": args.out_format,
         "batch_size": args.batch_size,
 
-        "model_name": "resnetse34v2",
-        "model_pretrained": "./ResNetModels/baseline_v2_ap.model",  
+        #"model_name": "resnetse34v2",
+        #"model_pretrained": "./ResNetModels/baseline_v2_ap.model",  
 
         # "model_name": "ecapa_tdnn",
-        # "model_pretrained": "./pretrain.model",  
+        # "model_pretrained": "./pretrained/pretrain.model",  
 
-        "eval_list": "/your/path/LA/ASVspoof2019_LA_asv_protocols/ASVspoof2019.LA.asv.eval.gi.trl.txt",
+        "model_name": "next_tdnn",
+        "model_pretrained": "./pretrained/model.pt",
+
+        "eval_list": "/home/eoil/AGENT/ICASSP2026/experiments/protocol/resnet34.txt",
         "enroll_path": "./enr_audio/eval",
 
         "device": "cuda",

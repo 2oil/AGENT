@@ -13,6 +13,8 @@ class ASV_BIM:
         self.asv_model = asv_model
         self.enroll_path = enroll_path
         self.input_path = input_path
+        print("EPS:", self.eps, "ALPHA:", self.alpha, "STEPS:", self.steps)
+
 
     def _load_enrollment_embedding(self, spk_id):
         enroll_candidates = glob.glob(os.path.join(self.enroll_path, f"{spk_id}_*.flac"))
@@ -25,7 +27,7 @@ class ASV_BIM:
         audio_tensor = torch.tensor(audio).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
-            embedding = self.asv_model.extract_feat(audio_tensor).squeeze(0).cpu()
+            embedding = self.asv_model(audio_tensor).squeeze(0).cpu()
 
         return embedding
 
@@ -44,19 +46,22 @@ class ASV_BIM:
         adv = ori.clone().detach()
         adv.requires_grad = True
 
-        original_embedding = self.asv_model.extract_feat(ori).squeeze(0)
+        original_embedding = self.asv_model(ori).squeeze(0)
         asv_before_score = F.cosine_similarity(target_embedding.to(self.device), original_embedding, dim=0).detach().cpu().numpy()
+        asv_threshold = 0.3161
 
         for _ in range(self.steps):
             adv.requires_grad = True
-            embedding = self.asv_model.extract_feat(adv).squeeze(0)
-            loss = F.cosine_similarity(target_embedding.to(self.device), embedding, dim=0).mean()
+            embedding = self.asv_model(adv).squeeze(0)
+            
+            loss_coss = F.cosine_similarity(target_embedding.to(self.device), embedding, dim=0).mean()
+            loss = - torch.abs(asv_threshold - loss_coss)
             grad = torch.autograd.grad(loss, adv, retain_graph=False)[0]
             adv = adv + self.alpha * grad.sign()
             adv = torch.max(torch.min(adv, ori + self.eps), ori - self.eps).clamp(-1, 1).detach()
 
         with torch.no_grad():
-            attacked_embedding = self.asv_model.extract_feat(adv).squeeze(0)
+            attacked_embedding = self.asv_model(adv).squeeze(0)
             after_cosine_sim = F.cosine_similarity(target_embedding.to(self.device), attacked_embedding, dim=0).detach().cpu().numpy()
 
         return asv_before_score, after_cosine_sim, adv.squeeze(0).detach().cpu().numpy()

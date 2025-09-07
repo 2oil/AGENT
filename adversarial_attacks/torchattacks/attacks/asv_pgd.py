@@ -25,7 +25,7 @@ class ASV_PGD:
         audio_tensor = torch.tensor(audio).unsqueeze(0).to(self.device)
 
         with torch.no_grad():
-            embedding = self.asv_model.extract_feat(audio_tensor).squeeze(0).cpu()
+            embedding = self.asv_model(audio_tensor).squeeze(0).cpu()
 
         return embedding
 
@@ -46,19 +46,19 @@ class ASV_PGD:
         adv = ori + torch.empty_like(ori).uniform_(-self.eps, self.eps)
         adv = adv.clamp(-1, 1).detach()
 
-        original_embedding = self.asv_model.extract_feat(ori).squeeze(0)
+        original_embedding = self.asv_model(ori).squeeze(0)
         asv_before_score = F.cosine_similarity(target_embedding.to(self.device), original_embedding, dim=0).detach().cpu().numpy()
 
         for _ in range(self.steps):
             adv.requires_grad = True
-            embedding = self.asv_model.extract_feat(adv).squeeze(0)
+            embedding = self.asv_model(adv).squeeze(0)
             loss = F.cosine_similarity(target_embedding.to(self.device), embedding, dim=0).mean()
             grad = torch.autograd.grad(loss, adv, retain_graph=False)[0]
             adv = adv + self.alpha * grad.sign()
             adv = torch.max(torch.min(adv, ori + self.eps), ori - self.eps).clamp(-1, 1).detach()
 
         with torch.no_grad():
-            attacked_embedding = self.asv_model.extract_feat(adv).squeeze(0)
+            attacked_embedding = self.asv_model(adv).squeeze(0)
             after_cosine_sim = F.cosine_similarity(target_embedding.to(self.device), attacked_embedding, dim=0).detach().cpu().numpy()
 
         return asv_before_score, after_cosine_sim, adv.squeeze(0).detach().cpu().numpy()

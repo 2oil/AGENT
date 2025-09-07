@@ -49,8 +49,7 @@ def main():
             #"config_path": "./AASIST_conf.yaml",
 
             "model_name": "aasistssl",
-            "model_pretrained": "./LA_model.pth",
-            "ssl_model": "./xlsr2_300m.pt",
+            "model_pretrained": "./pretrained/LA_model.pth",
 
             # "model_name": "conformer_tcm",
             # "model_pretrained": "./best_4.pth",
@@ -65,7 +64,7 @@ def main():
             "input_path": args.input_path,
         }
    
-    file_path = '/your/path/LA/ASVspoof2019_LA_asv_protocols/ASVspoof2019.LA.asv.eval.gi.trl.txt' 
+    file_path = '/home/eoil/AGENT/ICASSP2026/experiments/protocol/resnetOC.txt' 
     protocol_df = pd.read_csv(file_path, sep=" ", header=None, names=["utt1", "utt2", "label", "type"])
 
     filenames = protocol_df["utt2"].apply(lambda x: os.path.join(args.input_path, f"{x}.flac")).tolist()

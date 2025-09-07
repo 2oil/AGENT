@@ -40,7 +40,7 @@ class MyConformer(nn.Module):
 class SSLModel(nn.Module): #W2V
     def __init__(self, device):
         super(SSLModel, self).__init__()
-        cp_path = 'xlsr2_300m.pt'   # Change the pre-trained XLSR model path.
+        cp_path = '/home/eoil/AGENT/pretrained/xlsr2_300m.pt'
         try:
             from fairseq import checkpoint_utils
             model, cfg, task = checkpoint_utils.load_model_ensemble_and_task([cp_path])

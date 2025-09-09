@@ -70,7 +70,7 @@ class AGENT:
             # CM loss
             cm_logits = self.cm_model(adv)
             cm_score = cm_logits[0, 1]
-            cm_loss = torch.abs(cm_threshold - cm_score)
+            cm_loss = torch.abs(cm_score - cm_threshold)
             grad_cm = torch.autograd.grad(cm_loss, adv, retain_graph=False)[0]
 
             g_total = grad_asv + grad_cm

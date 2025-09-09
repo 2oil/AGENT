@@ -55,7 +55,7 @@ class ASV_BIM:
             embedding = self.asv_model(adv).squeeze(0)
             
             loss_coss = F.cosine_similarity(target_embedding.to(self.device), embedding, dim=0).mean()
-            loss = - torch.abs(asv_threshold - loss_coss)
+            loss = torch.abs(asv_threshold - loss_coss)
             grad = torch.autograd.grad(loss, adv, retain_graph=False)[0]
             adv = adv + self.alpha * grad.sign()
             adv = torch.max(torch.min(adv, ori + self.eps), ori - self.eps).clamp(-1, 1).detach()

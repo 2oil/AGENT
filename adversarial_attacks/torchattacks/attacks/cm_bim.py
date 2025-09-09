@@ -27,7 +27,7 @@ class CM_BIM(Attack):
         for _ in range(self.steps):
             images.requires_grad = True
             outputs = self.model(images)[0, 1]
-            loss = - torch.abs(cm_threshold - outputs)
+            loss = torch.abs(cm_threshold - outputs)
             grad = torch.autograd.grad(loss, images, retain_graph=False, create_graph=False)[0]
 
             images = images + self.alpha * grad.sign()

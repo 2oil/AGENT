@@ -6,7 +6,7 @@ Yowon Lee, Seongkyu Han, Thien-Phuc Doan, Sanghyun Hong, Souhwan Jung. (ICASSP 2
 
 ---
 
-## Summary (AGENT only)
+## Summary
 
 **AGENT** (Adversarial example Generation to Neutralize SASV systems) is a black-box adversarial attack designed specifically to break **SASV** (Spoofing-Aware Speaker Verification) pipelines by jointly targeting both ASV and CM objectives while avoiding mutual interference.
 
@@ -61,16 +61,17 @@ Recommended (paper settings):
    ./LA/ASVspoof2019_LA_eval/flac/
    ```
 
-2. **Surrogate & victim models** (links & suggestions)
-    [CM]
-    - [AASIST](https://github.com/clovaai/aasist.git)
-    - [AASIST-SSL](https://dl.fbaipublicfiles.com/fairseq/wav2vec/xlsr2_300m.pt)
-    - [RawNet2](https://github.com/asvspoof-challenge/2021/blob/main/LA/Baseline-RawNet2/README.md)
-    - [ResNet-OC](https://github.com/yzyouzhang/AIR-ASVspoof.git)
-    [ASV]
-    - [ECAPA-TDNN](https://github.com/TaoRuijie/ECAPA-TDNN.git)
-    - [ResNet34](https://github.com/eurecom-asp/sasv-joint-optimisation.git)
-    - [NeXt-TDNN](https://github.com/dmlguq456/NeXt_TDNN_ASV.git)
+2. **Surrogate & victim models**
+  ### Countermeasure (CM)
+  - **AASIST** — https://github.com/clovaai/aasist.git
+  - **AASIST-SSL** — https://github.com/issflab/ssl-antispoofing.git
+  - **RawNet2** —  https://github.com/asvspoof-challenge/2021/blob/main/LA/Baseline-RawNet2/README.md
+  - **ResNet-OC** —  https://github.com/yzyouzhang/AIR-ASVspoof.git
+
+  ### Automatic Speaker Verification (ASV)
+  - **ECAPA-TDNN** — https://github.com/TaoRuijie/ECAPA-TDNN.git
+  - **ResNet34** — https://github.com/eurecom-asp/sasv-joint-optimisation.git
+  - **NeXt-TDNN** — https://github.com/dmlguq456/NeXt_TDNN_ASV.git
 
    (Download pretrained checkpoints and put them under `models/` or update paths in `attack.sh` / `gen_ad_both.py`.)
 
@@ -78,11 +79,11 @@ Recommended (paper settings):
 
 ## Quick start — run AGENT
 
-Minimal example (bash):
-
 ```
 bash attack.sh
 ```
+
+This runs the AGENT generator with the defaults in `attack.sh`; change the command-line arguments to customize behavior.
 
 
 ## Evaluation (post-attack)
@@ -96,7 +97,7 @@ bash attack.sh
 
 ## Tips & recommended settings
 
-- AGENT is **gen_ad_both.py**-centric: do **not** run ASV-only or CM-only generators if your goal is the AGENT joint attack.
+- AGENT is **gen_ad_both.py**-centric: do not run ASV-only or CM-only generators if your goal is the AGENT joint attack.
 - Ensure surrogate models are reasonably representative of likely victim architectures (NeXt-TDNN, ECAPA, ResNet variants) to maximize transferability.
 - If you increase `ϵ`, consider decreasing `α` or increasing `steps` to avoid BIM overshoot.
 - Use GPUs when available—gradient-based iterative attacks are compute intensive.

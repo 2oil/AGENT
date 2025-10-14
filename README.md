@@ -1,88 +1,125 @@
-# AGENT: A Black-box Adversarial Attack Exposing the Achilles' Heel of SASV Systems
+# AGENT — A Black-box Adversarial Attack Exposing the Achilles' Heel of SASV Systems
 
-This repository provides the official implementation of the adversarial attack framework proposed in the paper:
-
-> **"AGENT: A Black-box Adversarial Attack Exposing the Achilles' Heel of SASV Systems"**  
-> Yowon Lee, Seongkyu Han, Thien-Phuc Doan, and Souhwan Jung  
-> [ICASSP 2026, Under Review]  
-> 📄 *[PDF available upon request]*
+**Repository:** Official implementation for  
+**"AGENT: A Black-box Adversarial Attack Exposing the Achilles' Heel of SASV Systems"**  
+Yowon Lee, Seongkyu Han, Thien-Phuc Doan, Sanghyun Hong, Souhwan Jung. (ICASSP 2026, under review)
 
 ---
 
-## 🔥 Overview
+## Summary (AGENT only)
 
-Spoofing-Aware Speaker Verification (SASV) systems integrate Automatic Speaker Verification (ASV) and Spoofing Countermeasure (CM) modules.  
-While robust against spoofing attacks, the vulnerability of these systems to **adversarial attacks** has been underexplored.
+**AGENT** (Adversarial example Generation to Neutralize SASV systems) is a black-box adversarial attack designed specifically to break **SASV** (Spoofing-Aware Speaker Verification) pipelines by jointly targeting both ASV and CM objectives while avoiding mutual interference.
 
-This repository contains code for generating **module-targeted adversarial examples** that attack:
-- **CM module** (spoof → bonafide)
-- **ASV module** (nontarget → target)
-- **BOTH modules** simultaneously (new in AGENT)
-
----
-
-## 🧪 Supported Attack Scenarios
-
-| Module Targeted | Objective |
-|------------------|-----------|
-| CM module | Spoofed samples misclassified as bonafide |
-| ASV module | Non-target samples accepted as target |
-| BOTH modules | Joint optimization across CM and ASV |
+Key ideas:
+- **Score-maximization loss** for ASV: directly maximize ASV similarity score to push examples deep into the target region (better transferability than threshold-based losses).
+- **CM loss term**: keep CM score above the CM threshold to avoid being rejected by anti-spoofing countermeasures.
+- **Directional-selective gradient fusion**: compute gradients of ASV and CM surrogate losses, detect misaligned directions, remove conflicting CM components, then fuse the gradients to avoid destructive interference.
+- **Iterative L∞ attack (BIM)** with step size `α` and budget `ϵ` (paper used `T = 30`, `α = ϵ/10`).
 
 ---
 
-## ▶️ Usage
+## Repo layout (high level)
 
-We provide a unified script `attack.sh` that automatically selects the correct attack script (`gen_ad_cm.py`, `gen_ad_asv.py`, or `gen_ad_both.py`) based on the prefix of the attack method.
-
-### 1. Prepare models and data
-
-- **Dataset**: Download and extract the [ASVspoof2019-LA evaluation set](https://datashare.ed.ac.uk/handle/10283/3336).  
-  Place the evaluation audio under:
-  
-./LA/ASVspoof2019_LA_eval/flac/
-
-
-- **Models**
-  [CM]
-  - [AASIST](https://github.com/clovaai/aasist.git)
-  - [AASIST-SSL](https://dl.fbaipublicfiles.com/fairseq/wav2vec/xlsr2_300m.pt)
-  - [RawNet2](https://github.com/asvspoof-challenge/2021/blob/main/LA/Baseline-RawNet2/README.md)
-  - [ResNet-OC](https://github.com/yzyouzhang/AIR-ASVspoof.git)
-    
-  [ASV]
-  - [ECAPA-TDNN](https://github.com/TaoRuijie/ECAPA-TDNN.git)
-  - [ResNet34](https://github.com/eurecom-asp/sasv-joint-optimisation.git)
-  - [NeXt-TDNN](https://github.com/dmlguq456/NeXt_TDNN_ASV.git)
-
-
-### 2. Run attack
-
-```bash
-bash attack.sh
+```
+AGENT/
+├─ attack.sh                 # launcher that picks the appropriate generator
+├─ gen_ad_both.py            # AGENT (joint attack) — the one to run for AGENT
+├─ gen_ad_cm.py              # CM-only attack (not needed for AGENT release usage)
+├─ gen_ad_asv.py             # ASV-only attack (not needed for AGENT release usage)
+├─ eval/                     # evaluation scripts and notebooks
+│  ├─ SNR.py
+│  └─ experiment.ipynb
+├─ fig/
+│  └─ AGENT.png
+├─ models/                   # model download / install helpers (readme links)
+└─ README.md                 # this file
 ```
 
-### 3. Evaluation
-
-get score ./AGENT/eval
-get ASR ./AGENT/experiments/experiment.ipynb
-get SNR ./AGENT/experiments/SNR.py
-
-
-## 🖼️ Attack Flow
-
-![SASV Attack Pipeline](figures/AGENT.png)
+> **Important:** This release focuses on **AGENT**. To run AGENT, use `gen_ad_both.py` (the attack that jointly optimizes against ASV+CM). The `attack.sh` wrapper will automatically select `gen_ad_both.py` if your `adv_method` begins with `BOTH`.
 
 ---
 
-### 📌 Tips
+## Requirements
 
-- adv_method1 should begin with 'CM' or 'ASV' to trigger the appropriate attack.
-- You can add more arguments (e.g., --epsilon, --steps) to attack.sh as needed.
+- Python 3.8+  
+- PyTorch (matching your CUDA)  
+- soundfile, numpy, tqdm, argparse, and other standard ML/audio libs  
+- Surrogate ASV/CM checkpoints (see **Prepare** below)
+
+Recommended (paper settings):
+- `T = 30` (iterations)
+- `α = ϵ / 10`
+- `ϵ` in `[0.001, 0.016]` depending on perceptual budget
 
 ---
 
-## 📬 Contact
+## Prepare models & data
 
-For questions, contact:  
-**Yowon Lee** – agent251@soongsil.ac.kr
+1. **Dataset (evaluation)**  
+   Download the ASVspoof2019 LA evaluation set and place audio under:
+   ```
+   ./LA/ASVspoof2019_LA_eval/flac/
+   ```
+
+2. **Surrogate & victim models** (links & suggestions)
+    [CM]
+    - [AASIST](https://github.com/clovaai/aasist.git)
+    - [AASIST-SSL](https://dl.fbaipublicfiles.com/fairseq/wav2vec/xlsr2_300m.pt)
+    - [RawNet2](https://github.com/asvspoof-challenge/2021/blob/main/LA/Baseline-RawNet2/README.md)
+    - [ResNet-OC](https://github.com/yzyouzhang/AIR-ASVspoof.git)
+    [ASV]
+    - [ECAPA-TDNN](https://github.com/TaoRuijie/ECAPA-TDNN.git)
+    - [ResNet34](https://github.com/eurecom-asp/sasv-joint-optimisation.git)
+    - [NeXt-TDNN](https://github.com/dmlguq456/NeXt_TDNN_ASV.git)
+
+   (Download pretrained checkpoints and put them under `models/` or update paths in `attack.sh` / `gen_ad_both.py`.)
+
+
+
+## Quick start — run AGENT
+
+Minimal example (bash):
+
+```bash attack.sh
+```
+
+Notes:
+- `attack.sh` has sensible defaults and will dispatch to `gen_ad_both.py` (AGENT joint ASV+CM attack) by default.
+- To override defaults (e.g., change `--epsilon`, `--device`, or model paths), you can still pass the same flags as before:
+  ```
+  /home/eoil/AGENT-1/attack.sh --input-dir /path/to/clean_utts --output-dir /path/to/save_advs --epsilon 0.008 --device cuda:0
+  ```
+- Logs and outputs by default are written to `./AGENT/output/` and `./AGENT/experiments/`. See `attack.sh` for exact default paths.
+- If you prefer to run from the repo root, `bash attack.sh` (from `/path/to/AGENT-1/`) will behave the same.
+
+
+## Evaluation (post-attack)
+
+- Scores and metrics are saved under `./AGENT/eval/` by default.
+- Example evaluation artifacts in this repo:
+  - `./AGENT/eval/` — scoring scripts
+  - `./AGENT/experiments/experiment.ipynb` — notebook summarizing ASR(Attack Success Rate) analyses
+  - `./AGENT/experiments/SNR.py` — compute SNR of perturbations
+---
+
+## Tips & recommended settings
+
+- AGENT is **gen_ad_both.py**-centric: do **not** run ASV-only or CM-only generators if your goal is the AGENT joint attack.
+- Ensure surrogate models are reasonably representative of likely victim architectures (NeXt-TDNN, ECAPA, ResNet variants) to maximize transferability.
+- If you increase `ϵ`, consider decreasing `α` or increasing `steps` to avoid BIM overshoot.
+- Use GPUs when available—gradient-based iterative attacks are compute intensive.
+
+---
+
+## Reproducibility notes
+
+- Paper experiment settings: `T=30`, `α=ϵ/10`, `ϵ` from `0.001` to `0.016`.  
+- Datasets: ASVspoof2019 LA evaluation set (used for all reported metrics).  
+- Check `gen_ad_both.py` defaults for exact optimizer/normalization and surrogate preprocessing used in reported experiments.
+
+---
+
+## Contact
+
+For questions about the code or experiments, contact:  
+**Yowon Lee** — agent251@soongsil.ac.kr

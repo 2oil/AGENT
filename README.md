@@ -80,17 +80,9 @@ Recommended (paper settings):
 
 Minimal example (bash):
 
-```bash attack.sh
 ```
-
-Notes:
-- `attack.sh` has sensible defaults and will dispatch to `gen_ad_both.py` (AGENT joint ASV+CM attack) by default.
-- To override defaults (e.g., change `--epsilon`, `--device`, or model paths), you can still pass the same flags as before:
-  ```
-  /home/eoil/AGENT-1/attack.sh --input-dir /path/to/clean_utts --output-dir /path/to/save_advs --epsilon 0.008 --device cuda:0
-  ```
-- Logs and outputs by default are written to `./AGENT/output/` and `./AGENT/experiments/`. See `attack.sh` for exact default paths.
-- If you prefer to run from the repo root, `bash attack.sh` (from `/path/to/AGENT-1/`) will behave the same.
+bash attack.sh
+```
 
 
 ## Evaluation (post-attack)

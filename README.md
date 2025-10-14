@@ -26,12 +26,13 @@ AGENT/
 ├─ gen_ad_both.py            # AGENT (joint attack) — the one to run for AGENT
 ├─ gen_ad_cm.py              # CM-only attack (not needed for AGENT release usage)
 ├─ gen_ad_asv.py             # ASV-only attack (not needed for AGENT release usage)
-├─ eval/                     # evaluation scripts and notebooks
+├─ experiments/                     # evaluation scripts and notebooks
 │  ├─ SNR.py
 │  └─ experiment.ipynb
 ├─ fig/
 │  └─ AGENT.png
 ├─ models/                   # model download / install helpers (readme links)
+├─ eval /                    # evaluation scripts for each model
 └─ README.md                 # this file
 ```
 

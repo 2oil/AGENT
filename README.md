@@ -2,7 +2,6 @@
 
 **Repository:** Official implementation for  
 **"AGENT: A Black-box Adversarial Attack Exposing the Achilles' Heel of SASV Systems"**  
-Yowon Lee, Seongkyu Han, Thien-Phuc Doan, Sanghyun Hong, Souhwan Jung. (ICASSP 2026, under review)
 
 ---
 

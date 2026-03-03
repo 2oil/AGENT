@@ -10,10 +10,9 @@
 **AGENT** (Adversarial example Generation to Neutralize SASV systems) is a black-box adversarial attack designed specifically to break **SASV** (Spoofing-Aware Speaker Verification) pipelines by jointly targeting both ASV and CM objectives while avoiding mutual interference.
 
 Key ideas:
-- **Score-maximization loss** for ASV: directly maximize ASV similarity score to push examples deep into the target region (better transferability than threshold-based losses).
+- **Score-maximization objective (SMO)** for ASV: directly maximize ASV similarity score to push examples deep into the target region (better transferability than threshold-based losses).
 - **CM loss term**: keep CM score above the CM threshold to avoid being rejected by anti-spoofing countermeasures.
 - **Directional-selective gradient fusion**: compute gradients of ASV and CM surrogate losses, detect misaligned directions, remove conflicting CM components, then fuse the gradients to avoid destructive interference.
-- **Iterative L∞ attack (BIM)** with step size `α` and budget `ϵ` (paper used `T = 30`, `α = ϵ/10`).
 
 ---
 
@@ -110,9 +109,3 @@ This runs the AGENT generator with the defaults in `attack.sh`; change the comma
 - Datasets: ASVspoof2019 LA evaluation set (used for all reported metrics).  
 - Check `gen_ad_both.py` defaults for exact optimizer/normalization and surrogate preprocessing used in reported experiments.
 
----
-
-## Contact
-
-For questions about the code or experiments, contact:  
-**Yowon Lee** — agent251@soongsil.ac.kr
